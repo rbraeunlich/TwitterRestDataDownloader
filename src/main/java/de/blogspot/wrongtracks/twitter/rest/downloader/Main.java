@@ -8,7 +8,7 @@ import de.blogspot.wrongtracks.twitter.rest.downloader.io.TwitterDataReaderFacto
 import de.blogspot.wrongtracks.twitter.rest.downloader.io.TwitterDataWriterFactory;
 import de.blogspot.wrongtracks.twitter.rest.downloader.io.impl.TwitterDataFileReaderFactory;
 import de.blogspot.wrongtracks.twitter.rest.downloader.io.impl.TwitterDataFileWriterFactory;
-import de.blogspot.wrongtracks.twitter.rest.downloader.timing.impl.SleeperImpl;
+import de.blogspot.wrongtracks.twitter.rest.downloader.timing.impl.SingleStartThreadSleeper;
 import twitter4j.Twitter;
 import twitter4j.TwitterException;
 import twitter4j.TwitterFactory;
@@ -16,6 +16,7 @@ import twitter4j.conf.ConfigurationBuilder;
 
 public class Main {
 
+	private static final String DOWNLOADER_PROPERTIES = "downloader.properties";
 	private static final String CURSOR_FILE_KEY = "cursorFilesDir";
 	private static final String GRAPH_FILES_DIR_KEY = "graphFilesDir";
 	private static final String TWEETS_FILES_DIR_KEY = "tweetsFilesDir";
@@ -26,7 +27,7 @@ public class Main {
 	public static void main(String[] args) throws TwitterException, IOException {
 		Properties props = new Properties();
 		props.load(Main.class.getClassLoader().getResourceAsStream(
-				"downloader.properties"));
+				DOWNLOADER_PROPERTIES));
 		String cursorFile = props.getProperty(CURSOR_FILE_KEY);
 		String graphFilesDir = props.getProperty(GRAPH_FILES_DIR_KEY);
 		String tweetsFilesDir = props.getProperty(TWEETS_FILES_DIR_KEY);
@@ -46,7 +47,7 @@ public class Main {
 				props.getProperty(CONSUMER_SECRET_KEY));
 		TwitterDataDownloader downloader = new TwitterDataDownloader(args[0],
 				Integer.valueOf(args[1]), writerFactory, readerFactory,
-				new SleeperImpl(ONE_MIN_IN_MS));
+				new SingleStartThreadSleeper(ONE_MIN_IN_MS));
 		downloader.start(twitter);
 	}
 

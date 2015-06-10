@@ -97,14 +97,12 @@ public class TwitterDataDownloader {
 					cursor = readAndWriteFriends(user.getScreenName(), dataWriter,
 							cursor, i, friendsList);
 					for (User friend : friendsList) {
-						LOGGER.info("Reading tweets for friend " + friend.getScreenName());
 						if (!friend.isProtected()) {
 							readAndWriteTweets(twitter, i, friend);
 						}
 						sleeper.start();
 					}
 					LOGGER.info("sleeping");
-					//TODO optimize sleeper
 					sleeper.waitUntilEndOfInterval();
 				} while (cursor != 0);
 			}
@@ -121,6 +119,7 @@ public class TwitterDataDownloader {
 		TwitterDataWriter friendWriter = getWriterFactory().createDataWriter(
 				user.getScreenName(), level + 1);
 		if (!friendWriter.isTweetsFileExisting()) {
+			LOGGER.info("Reading tweets for friend " + user.getScreenName());
 			ResponseList<Status> timeline = twitter.getUserTimeline(
 					user.getId(), new Paging(1, 200));
 			friendWriter.writeToTweetsFile(timeline);
@@ -133,6 +132,8 @@ public class TwitterDataDownloader {
 				friendWriter.writeToTweetsFile(timeline);
 				minId = getMinId(timeline);
 			}
+		} else {
+			LOGGER.info("Tweets already present for " + user.getScreenName());
 		}
 	}
 
