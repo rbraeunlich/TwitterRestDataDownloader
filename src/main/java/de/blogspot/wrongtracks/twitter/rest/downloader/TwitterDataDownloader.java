@@ -80,38 +80,46 @@ public class TwitterDataDownloader {
 			}
 			for (String currUser : usersForCurrentLevel) {
 				LOGGER.info("Reading data for user " + currUser);
-				Long cursor = getReaderFactory().createDataReader(currUser, i).readCursor();
-				User user = twitter.showUser(currUser);
+				Long cursor = getReaderFactory().createDataReader(currUser, i)
+						.readCursor();
 				do {
 					TwitterDataWriter dataWriter = getWriterFactory()
-							.createDataWriter(user.getScreenName(), i);
+							.createDataWriter(currUser, i);
 					if (hasGraphDataAlreadyBeenRead(cursor, dataWriter)) {
 						cursor = 0L;
-						LOGGER.info("Skipping " + user.getScreenName());
+						LOGGER.info("Skipping " + currUser);
 						continue;
 					}
-					PagableResponseList<User> friendsList = twitter
-							.getFriendsList(user.getId(), cursor, FRIENDS_PER_FRIEND_REQUEST);
-					cursor = friendsList.getNextCursor();
-					LOGGER.info("Cursor " + cursor);
-					cursor = readAndWriteFriends(user.getScreenName(), dataWriter,
-							cursor, i, friendsList);
-					for (User friend : friendsList) {
-						if (!friend.isProtected()) {
-							readAndWriteTweets(twitter, i, friend);
+					User user = twitter.showUser(currUser);
+					if (!user.isProtected()) {
+						PagableResponseList<User> friendsList = twitter
+								.getFriendsList(user.getId(), cursor,
+										FRIENDS_PER_FRIEND_REQUEST);
+						cursor = friendsList.getNextCursor();
+						LOGGER.info("Cursor " + cursor);
+						cursor = readAndWriteFriends(user.getScreenName(),
+								dataWriter, cursor, i, friendsList);
+						for (User friend : friendsList) {
+							if (!friend.isProtected()) {
+								readAndWriteTweets(twitter, i, friend);
+							}
+							sleeper.start();
 						}
-						sleeper.start();
+						LOGGER.info("sleeping");
+						sleeper.waitUntilEndOfInterval();
+					} else {
+						cursor = 0L;
 					}
-					LOGGER.info("sleeping");
-					sleeper.waitUntilEndOfInterval();
 				} while (cursor != 0);
 			}
 		}
+		LOGGER.info("Done for level " + level + " and user " + startUser);
 	}
 
 	private boolean hasGraphDataAlreadyBeenRead(Long cursor,
 			TwitterDataWriter dataWriter) {
-		return (cursor == -1L || cursor == 0L) && dataWriter.isGraphFileExisting();
+		return (cursor == -1L || cursor == 0L)
+				&& dataWriter.isGraphFileExisting();
 	}
 
 	private void readAndWriteTweets(Twitter twitter, Integer level, User user)

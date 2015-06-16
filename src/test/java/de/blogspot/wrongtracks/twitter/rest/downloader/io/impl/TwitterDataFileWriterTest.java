@@ -68,6 +68,15 @@ public class TwitterDataFileWriterTest {
 	}
 	
 	@Test
+	public void existingZippedTweetsFile() throws IOException {
+		File file = new File(TEST_TWEETS_DIR + USER + ".json.gz");
+		file.createNewFile();
+		toDelete.add(file);
+		boolean existing = writer.isTweetsFileExisting();
+		assertThat(existing, is(true));
+	}
+	
+	@Test
 	public void nonExistingGraphFile() {
 		boolean existing = writer.isGraphFileExisting();
 		assertThat(existing, is(false));
@@ -119,6 +128,18 @@ public class TwitterDataFileWriterTest {
 		writer.writeToGraphFile(Collections.singleton(twitterUser));
 		String string = FileUtils.readFileToString(graphFile, ENCODING);
 		assertThat(string, is(user + "\n"));
+	}
+	
+	@Test
+	public void writeToGraphWithoutFriendsCreatesEmptryFile() throws Exception {
+		File levelDir = new File(TEST_GRAPH_DIR + LEVEL);
+		levelDir.mkdir();
+		toDelete.add(levelDir);
+		File graphFile = new File(TEST_GRAPH_DIR  + LEVEL + "/" + USER + ".json");
+		toDelete.add(graphFile);
+		writer.writeToGraphFile(Collections.emptyList());
+		String string = FileUtils.readFileToString(graphFile, ENCODING);
+		assertThat(string, is(""));
 	}
 
 	@Test

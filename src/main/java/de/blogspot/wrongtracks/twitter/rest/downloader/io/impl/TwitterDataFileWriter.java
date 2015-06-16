@@ -60,8 +60,14 @@ public class TwitterDataFileWriter implements TwitterDataWriter {
 	}
 
 	public void writeToGraphFile(Iterable<? extends TwitterResponse> what) {
+		String graphFileDir = graphFilesDir + "/level" + level + "/";
+		if(!isGraphFileExisting()){
+			//create a file even if the user doesn't have any friends to check
+			//later that we already read his data
+			writeToUserFile("", graphFileDir, user);
+		}
 		what.forEach((x) -> writeToUserFile(TwitterObjectFactory.getRawJSON(x)
-				+ LINE_SEPARATOR, graphFilesDir + "/level" + level + "/", user));
+				+ LINE_SEPARATOR, graphFileDir, user));
 	}
 
 	public void writeToTweetsFile(Iterable<? extends TwitterResponse> what) {
@@ -70,7 +76,7 @@ public class TwitterDataFileWriter implements TwitterDataWriter {
 	}
 
 	public boolean isTweetsFileExisting() {
-		return new File(tweetsFilesDir + user).exists();
+		return new File(tweetsFilesDir + user).exists() || new File(tweetsFilesDir + user + ".gz").exists();
 	}
 
 	public boolean isGraphFileExisting() {
